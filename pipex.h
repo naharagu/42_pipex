@@ -6,21 +6,24 @@
 /*   By: naharagu <naharagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 19:07:16 by naharagu          #+#    #+#             */
-/*   Updated: 2022/10/05 20:54:17 by naharagu         ###   ########.fr       */
+/*   Updated: 2022/10/17 23:05:51 by naharagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
-#include <sys/wait.h>
+#ifndef PIPEX_H
+# define PIPEX_H
 
-typedef struct s_info
+# include "libft/libft.h"
+# include <fcntl.h>
+# include <stdio.h>
+# include <sys/wait.h>
+# include <unistd.h>
+
+typedef struct s_data
 {
-	pid_t	pid1;
-	pid_t	pid2;
-	int		in;
-	int		out;
-	char	*path;
-	char	**cmd_paths;
-	char	**cmd_args;
-	char	*cmd;
-}			t_info;
+	int	fd_in;
+	int	fd_out;
+	int	*fd_pipe;
+}		t_data;
+
+#endif
