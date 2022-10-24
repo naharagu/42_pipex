@@ -1,8 +1,8 @@
 CC		= gcc
 
-LIFBT	= ./libft
+LIBFT	= ./libft
 
-CFLAGS	= -Wall -Wextra -Werror -I$(LIFBT)
+CFLAGS	= -Wall -Wextra -Werror -I$(LIBFT)
 
 SRCS	= main.c
 
@@ -11,19 +11,18 @@ NAME	= pipex
 OBJS	= ${SRCS:%.c=%.o}
 
 $(NAME): $(OBJS)
-	make -C $(LIFBT)
-	cp $(LIFBT)/libft.a $(NAME)
-	ar rc $(NAME) $(OBJS)
+	make -C $(LIBFT)
+	$(CC) $(CFLAGS) -L $(LIBFT) -lft -o $@ $^
 
 all: $(NAME)
 
 clean:
 	rm -f $(OBJS)
-	make clean -C $(LIFBT)
+	make clean -C $(LIBFT)
 
 fclean: clean
 	rm -f $(NAME)
-	rm -f $(LIFBT)/libft.a
+	make fclean -C $(LIBFT)
 
 re: fclean all
 

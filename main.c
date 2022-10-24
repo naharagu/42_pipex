@@ -6,7 +6,7 @@
 /*   By: naharagu <naharagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 19:02:09 by naharagu          #+#    #+#             */
-/*   Updated: 2022/10/24 23:29:07 by naharagu         ###   ########.fr       */
+/*   Updated: 2022/10/24 23:40:35 by naharagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,6 +103,17 @@ int	main(int argc, char **argv, char **envp)
 
 	i = 0;
 	check_args_and_init(argc, argv, &data);
-	execute_cmd(argv, envp, &data, i);
-	exit(EXIT_SUCCESS);
+	while (i < 2)
+	{
+		execute_cmd(argv, envp, &data, i);
+		i++;
+	}
+	i = 0;
+	while (i < 2)
+	{
+		if (waitpid(-1, NULL, 0) == -1)
+			put_perror_and_exit("wait");
+		i++;
+	}
+	return (0);
 }
