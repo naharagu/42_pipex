@@ -12,7 +12,7 @@
 
 #include "pipex.h"
 
-char	*get_cmdpath(char *cmd, char ** envp)
+char	*get_cmdpath(char *cmd, char **envp)
 {
 	char	**paths;
 	char	*tmp;
@@ -41,10 +41,10 @@ char	*get_cmdpath(char *cmd, char ** envp)
 	return (NULL);
 }
 
-void	execute_child_process(char **argv, char ** envp, t_info * info)
+void	execute_child_process(char **argv, char **envp, t_info *info)
 {
-	char ** cmd_arg;
-	char * cmd_path;
+	char	**cmd_arg;
+	char	*cmd_path;
 
 	close(info->fd_pipe[0]);
 	if (dup2(info->fd_pipe[1], STDOUT_FILENO) == -1)
@@ -63,10 +63,11 @@ void	execute_child_process(char **argv, char ** envp, t_info * info)
 		put_perror_and_exit("execve");
 }
 
-void	execute_parent_process(char **argv, char ** envp, t_info * info, pid_t *pid)
+void	execute_parent_process(char **argv, char **envp, t_info *info,
+		pid_t *pid)
 {
-	char ** cmd_arg;
-	char * cmd_path;
+	char	**cmd_arg;
+	char	*cmd_path;
 
 	waitpid(*pid, &info->pid_status, WNOHANG);
 	close(info->fd_pipe[1]);
@@ -86,7 +87,7 @@ void	execute_parent_process(char **argv, char ** envp, t_info * info, pid_t *pid
 		put_perror_and_exit("execve");
 }
 
-void	pipex(char ** argv, char **envp, t_info * info)
+void	pipex(char **argv, char **envp, t_info *info)
 {
 	pid_t	pid;
 
