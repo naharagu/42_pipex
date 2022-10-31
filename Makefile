@@ -3,8 +3,9 @@ CC		= gcc
 LIBFT	= ./libft
 
 CFLAGS	= -Wall -Wextra -Werror -I$(LIBFT)
+# CFLAGS	= -I$(LIBFT)
 
-SRCS	= main.c
+SRCS	= main.c check_errors.c
 
 NAME	= pipex
 

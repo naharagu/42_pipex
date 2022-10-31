@@ -6,19 +6,13 @@
 /*   By: naharagu <naharagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 19:02:09 by naharagu          #+#    #+#             */
-/*   Updated: 2022/10/24 23:40:35 by naharagu         ###   ########.fr       */
+/*   Updated: 2022/10/31 16:00:13 by naharagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-void	put_perror_and_exit(char *s)
-{
-	perror(s);
-	exit(EXIT_FAILURE);
-}
-
-char	*get_cmdpath(char **envp, char *cmd)
+char	*get_cmdpath(char *cmd, char ** envp)
 {
 	char	**paths;
 	char	*tmp;
@@ -27,6 +21,7 @@ char	*get_cmdpath(char **envp, char *cmd)
 	while (ft_strncmp("PATH=", *envp, 5))
 		envp++;
 	paths = ft_split(&envp[0][5], ':');
+	printf("paths = :%s", paths[0]);
 	if (!paths)
 		put_perror_and_exit("Error: ft_split");
 	while (*paths)
@@ -46,74 +41,71 @@ char	*get_cmdpath(char **envp, char *cmd)
 	return (NULL);
 }
 
-void	set_dup2(t_data *data, size_t i)
+void	execute_child_process(char **argv, char ** envp, t_info * info)
 {
-	if (!i)
-	{
-		if (dup2(data->fd_in, STDIN_FILENO) == -1)
-			put_perror_and_exit("dup2");
-		if (dup2(data->fd_pipe[1], STDOUT_FILENO) == -1)
-			put_perror_and_exit("dup2");
-	}
-	else
-	{
-		if (dup2(data->fd_in, STDOUT_FILENO) == -1)
-			put_perror_and_exit("dup2");
-		if (dup2(data->fd_pipe[0], STDIN_FILENO) == -1)
-			put_perror_and_exit("dup2");
-	}
+	char ** cmd_arg;
+	char * cmd_path;
+
+	close(info->fd_pipe[0]);
+	if (dup2(info->fd_pipe[1], STDOUT_FILENO) == -1)
+		put_perror_and_exit("dup2");
+	close(info->fd_pipe[1]);
+	if (dup2(info->fd_in, STDIN_FILENO) == -1)
+		put_perror_and_exit("dup2");
+	cmd_arg = ft_split(argv[2], ' ');
+	if (!cmd_arg)
+		put_perror_and_exit("split");
+	cmd_path = get_cmdpath(cmd_arg[0], envp);
+	// ft_putstr_fd(cmd_path, 2);
+	if (!cmd_path)
+		put_perror_and_exit("cmd not found");
+	if (execve(cmd_path, cmd_arg, envp) == -1)
+		put_perror_and_exit("execve");
 }
 
-void	execute_cmd(char **argv, char **envp, t_data *data, size_t i)
+void	execute_parent_process(char **argv, char ** envp, t_info * info, pid_t *pid)
+{
+	char ** cmd_arg;
+	char * cmd_path;
+
+	waitpid(*pid, &info->pid_status, WNOHANG);
+	close(info->fd_pipe[1]);
+	if (dup2(info->fd_pipe[0], STDIN_FILENO) == -1)
+		put_perror_and_exit("dup2");
+	close(info->fd_pipe[0]);
+	if (dup2(info->fd_out, STDOUT_FILENO) == -1)
+		put_perror_and_exit("dup2");
+	cmd_arg = ft_split(argv[3], ' ');
+	if (!cmd_arg)
+		put_perror_and_exit("split");
+	cmd_path = get_cmdpath(cmd_arg[0], envp);
+	// ft_putstr_fd(cmd_path, 2);
+	if (!cmd_path)
+		put_perror_and_exit("cmd not found");
+	if (execve(cmd_path, cmd_arg, envp) == -1)
+		put_perror_and_exit("execve");
+}
+
+void	pipex(char ** argv, char **envp, t_info * info)
 {
 	pid_t	pid;
-	char	*cmd_path;
 
 	pid = fork();
 	if (pid == -1)
 		put_perror_and_exit("fork");
-	set_dup2(data, i);
-	close(data->fd_in);
-	close(data->fd_pipe[0]);
-	close(data->fd_pipe[1]);
-	cmd_path = get_cmdpath(envp, argv[2]);
-	if (execve(cmd_path, argv, envp) == -1)
-		put_perror_and_exit("execve");
-}
-
-void	check_args_and_init(int argc, char **argv, t_data *data)
-{
-	if (argc != 5)
-		put_perror_and_exit("invalid arguments");
-	data->fd_in = open(argv[1], O_RDONLY);
-	if (data->fd_in < 0)
-		put_perror_and_exit("open");
-	data->fd_out = open(argv[4], O_CREAT | O_WRONLY | O_TRUNC, 0777);
-	if (data->fd_out < 0)
-		put_perror_and_exit("open");
-	pipe(data->fd_pipe);
-	if (data->fd_pipe < 0)
-		put_perror_and_exit("pipe");
+	else if (pid == 0)
+		execute_child_process(argv, envp, info);
+	else if (pid > 0)
+		execute_parent_process(argv, envp, info, &pid);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
-	t_data	data;
-	size_t	i;
+	t_info	info;
 
-	i = 0;
-	check_args_and_init(argc, argv, &data);
-	while (i < 2)
-	{
-		execute_cmd(argv, envp, &data, i);
-		i++;
-	}
-	i = 0;
-	while (i < 2)
-	{
-		if (waitpid(-1, NULL, 0) == -1)
-			put_perror_and_exit("wait");
-		i++;
-	}
-	return (0);
+	check_args_and_init(argc, argv, &info);
+	pipex(argv, envp, &info);
+	if (waitpid(-1, NULL, 0) == -1)
+		put_perror_and_exit("wait");
+	return (EXIT_SUCCESS);
 }
