@@ -6,7 +6,7 @@
 /*   By: naharagu <naharagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/04 19:02:09 by naharagu          #+#    #+#             */
-/*   Updated: 2022/11/01 10:40:57 by naharagu         ###   ########.fr       */
+/*   Updated: 2022/11/01 12:15:09 by naharagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ void	pipex(char **argv, char **envp, t_info *info)
 	else if (pid > 0)
 		execute_parent_process(argv, envp, info, &pid);
 	if (waitpid(-1, NULL, 0) == -1)
-		put_perror_and_exit("wait");
+		put_perror_and_exit("wait failed");
 }
 
 char	*get_cmdpath(char *cmd, char **envp)
@@ -91,7 +91,8 @@ void	execute_parent_process(char **argv, char **envp, t_info *info,
 	char	**cmd_arg;
 	char	*cmd_path;
 
-	waitpid(*pid, &info->pid_status, WNOHANG);
+	if (waitpid(*pid, &info->pid_status, WNOHANG) == -1)
+		put_perror_and_exit("wait failed");
 	close(info->fd_pipe[1]);
 	if (dup2(info->fd_pipe[0], STDIN_FILENO) == -1)
 		put_perror_and_exit("dup2 failed");
